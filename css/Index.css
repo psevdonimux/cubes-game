@@ -1,0 +1,95 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+#color {
+	background-color: #323338;
+	overflow: hidden;
+}
+#menu {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	text-align: center;
+	z-index: 10;
+}
+#menu h1 {
+	color: #fff;
+	font-family: Arial, sans-serif;
+	margin-bottom: 20px;
+}
+#playerInput {
+	width: 120px;
+	padding: 10px;
+	font-size: 18px;
+	text-align: center;
+	border: 2px solid #3498db;
+	border-radius: 8px;
+	background: #2c2c30;
+	color: #fff;
+}
+#colorPicker {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	gap: 10px;
+	margin: 20px 0;
+	max-width: 280px;
+}
+.colorOption {
+	width: 45px;
+	height: 45px;
+	border-radius: 50%;
+	cursor: pointer;
+	border: 3px solid transparent;
+	transition: transform 0.2s, border-color 0.2s;
+}
+.colorOption:active {
+	transform: scale(0.9);
+}
+.colorOption.selected {
+	border-color: #fff;
+	transform: scale(1.1);
+}
+#startBtn {
+	padding: 12px 30px;
+	font-size: 18px;
+	background: #3498db;
+	color: #fff;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+}
+#startBtn:active {
+	background: #2980b9;
+}
+#men {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 0;
+}
+#joystick {
+	position: fixed;
+	z-index: 10;
+	pointer-events: none;
+	transform: translate(-50%, -50%);
+}
+#joystickBase {
+	width: 100px;
+	height: 100px;
+	background: rgba(255, 255, 255, 0.15);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border: 2px solid rgba(255, 255, 255, 0.3);
+}
+#joystickStick {
+	width: 40px;
+	height: 40px;
+	background: rgba(255, 255, 255, 0.5);
+	border-radius: 50%;
+}

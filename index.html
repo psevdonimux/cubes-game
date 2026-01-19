@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html id="color">
+<meta name="viewport" content="width=device-width, user-scalable=no">
+<meta charset="UTF-8">
+<link rel="stylesheet" href="css/Index.css?v=4">
+<script src="javascript/Pers.js?v=8"></script>
+<div id="menu">
+	<h1>Cubes Game</h1>
+	<input type="number" id="playerInput" min="1" max="99" value="1" placeholder="Номер">
+	<div id="colorPicker">
+		<div class="colorOption" data-color="#e74c3c" style="background:#e74c3c"></div>
+		<div class="colorOption" data-color="#3498db" style="background:#3498db"></div>
+		<div class="colorOption" data-color="#2ecc71" style="background:#2ecc71"></div>
+		<div class="colorOption" data-color="#f1c40f" style="background:#f1c40f"></div>
+		<div class="colorOption" data-color="#9b59b6" style="background:#9b59b6"></div>
+		<div class="colorOption" data-color="#1abc9c" style="background:#1abc9c"></div>
+		<div class="colorOption" data-color="#e67e22" style="background:#e67e22"></div>
+		<div class="colorOption" data-color="#ff6b81" style="background:#ff6b81"></div>
+		<div class="colorOption" data-color="#a29bfe" style="background:#a29bfe"></div>
+		<div class="colorOption" data-color="#fd79a8" style="background:#fd79a8"></div>
+	</div>
+	<button id="startBtn">Начать игру</button>
+</div>
+<div id="game" style="display:none">
+	<canvas id="men"></canvas>
+	<div id="joystick" style="display:none">
+		<div id="joystickBase">
+			<div id="joystickStick"></div>
+		</div>
+	</div>
+</div>
+<script>
+var localBox, selectedColor = '#e74c3c';
+var canvasBox, ctx, pers, otherPers = [];
+var syncFrame = 0, syncInterval = 3;
+var stickX = 0, stickY = 0;
+document.querySelectorAll('.colorOption').forEach(function(el){
+	el.onclick = function(){
+		document.querySelectorAll('.colorOption').forEach(function(e){ e.classList.remove('selected'); });
+		el.classList.add('selected');
+		selectedColor = el.dataset.color;
+	};
+});
+document.querySelector('.colorOption').classList.add('selected');
+document.getElementById('startBtn').onclick = function(){
+	localBox = document.getElementById('playerInput').value || '1';
+	localStorage.setItem('box', localBox);
+	localStorage.setItem('color', selectedColor);
+	document.getElementById('menu').style.display = 'none';
+	document.getElementById('game').style.display = 'block';
+	initGame();
+};
+function initGame(){
+	canvasBox = document.getElementById('men');
+	canvasBox.width = window.innerWidth;
+	canvasBox.height = window.innerHeight;
+	ctx = canvasBox.getContext('2d');
+	initJoystick();
+	fetch('php2/Init.php?box=' + localBox + '&color=' + encodeURIComponent(selectedColor))
+		.then(function(r){ return r.text(); })
+		.then(function(text){
+			var data;
+			try{ data = JSON.parse(text); }
+			catch(e){ data = {x: 100, y: 100}; }
+			var box = {
+				num: localBox,
+				x: Number(data.x) || 100,
+				y: Number(data.y) || 100,
+				color: selectedColor,
+				width: DEFAULT_SIZE,
+				height: DEFAULT_SIZE,
+				speed: DEFAULT_SPEED
+			};
+			pers = new Pers(ctx, canvasBox, box);
+			gameLoop();
+		})
+		.catch(function(){
+			pers = new Pers(ctx, canvasBox, {
+				num: localBox, x: 100, y: 100, color: selectedColor,
+				width: DEFAULT_SIZE, height: DEFAULT_SIZE, speed: DEFAULT_SPEED
+			});
+			gameLoop();
+		});
+}
+function initJoystick(){
+	var joystick = document.getElementById('joystick');
+	var base = document.getElementById('joystickBase');
+	var stick = document.getElementById('joystickStick');
+	var maxDist = 50, startX = 0, startY = 0, active = false;
+	function show(x, y){
+		joystick.style.left = x + 'px';
+		joystick.style.top = y + 'px';
+		joystick.style.display = 'block';
+		startX = x;
+		startY = y;
+	}
+	function hide(){
+		joystick.style.display = 'none';
+		stick.style.transform = 'translate(0,0)';
+		stickX = 0;
+		stickY = 0;
+		active = false;
+	}
+	function move(x, y){
+		var dx = x - startX;
+		var dy = y - startY;
+		var dist = Math.sqrt(dx * dx + dy * dy);
+		if(dist > maxDist){
+			dx = dx / dist * maxDist;
+			dy = dy / dist * maxDist;
+		}
+		stick.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+		stickX = dx / maxDist;
+		stickY = dy / maxDist;
+	}
+	canvasBox.addEventListener('touchstart', function(e){
+		e.preventDefault();
+		var t = e.touches[0];
+		show(t.clientX, t.clientY);
+		active = true;
+	});
+	canvasBox.addEventListener('touchmove', function(e){
+		e.preventDefault();
+		if(active) move(e.touches[0].clientX, e.touches[0].clientY);
+	});
+	canvasBox.addEventListener('touchend', hide);
+	canvasBox.addEventListener('touchcancel', hide);
+	canvasBox.addEventListener('mousedown', function(e){
+		show(e.clientX, e.clientY);
+		active = true;
+	});
+	window.addEventListener('mousemove', function(e){
+		if(active) move(e.clientX, e.clientY);
+	});
+	window.addEventListener('mouseup', hide);
+	var keys = {};
+	window.addEventListener('keydown', function(e){
+		keys[e.code] = true;
+		updateKeys();
+	});
+	window.addEventListener('keyup', function(e){
+		keys[e.code] = false;
+		updateKeys();
+	});
+	function updateKeys(){
+		stickX = (keys['KeyD'] ? 1 : 0) - (keys['KeyA'] ? 1 : 0);
+		stickY = (keys['KeyS'] ? 1 : 0) - (keys['KeyW'] ? 1 : 0);
+	}
+}
+function gameLoop(){
+	if(!pers) return;
+	pers.obj.x += stickX * pers.getSpeed();
+	pers.obj.y += stickY * pers.getSpeed();
+	for(var i = 0; i < otherPers.length; i++) otherPers[i].lerp();
+	pers.clear();
+	pers.draw();
+	for(var i = 0; i < otherPers.length; i++) otherPers[i].draw();
+	if(syncFrame++ >= syncInterval){
+		syncFrame = 0;
+		syncInterval = (stickX !== 0 || stickY !== 0) ? 2 : 5;
+		fetch('php2/Update.php?box=' + localBox + '&x=' + Math.round(pers.obj.x) + '&y=' + Math.round(pers.obj.y) + '&color=' + encodeURIComponent(selectedColor)).catch(function(){});
+		fetch('php2/Info.php?box=' + localBox)
+			.then(function(r){ return r.json(); })
+			.then(function(data){
+				for(var num in data){
+					if(num == localBox) continue;
+					var pos = data[num];
+					var found = null;
+					for(var i = 0; i < otherPers.length; i++){
+						if(otherPers[i].obj.num == num){ found = otherPers[i]; break; }
+					}
+					if(found){
+						found.setTargetXY(pos.x, pos.y);
+						found.obj.color = pos.color || found.obj.color;
+					} else {
+						var np = new Pers(ctx, canvasBox, {
+							num: num, x: Number(pos.x), y: Number(pos.y),
+							color: pos.color || '#3498db',
+							width: DEFAULT_SIZE, height: DEFAULT_SIZE, speed: DEFAULT_SPEED
+						});
+						otherPers.push(np);
+					}
+				}
+			}).catch(function(){});
+	}
+	requestAnimationFrame(gameLoop);
+}
+window.onresize = function(){
+	if(canvasBox){
+		canvasBox.width = window.innerWidth;
+		canvasBox.height = window.innerHeight;
+	}
+};
+</script>
+</html>
