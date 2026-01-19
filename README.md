@@ -40,11 +40,11 @@ php -S localhost:8080
 
 | Меню |
 |------|
-| ![Меню](screenshots/menu.webp) |
+| ![Меню](screenshots/menu2.webp) |
 
 | Игра |
 |------|
-| ![Игра](screenshots/play.webp) |
+| ![Игра](screenshots/play2.webp) |
 
 ## Требования
 
