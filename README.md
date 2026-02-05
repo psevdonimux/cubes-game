@@ -1,3 +1,5 @@
+[Русский](README.md) | [English](README.en.md)
+
 # Cubes Game
 
 Мультиплеерная браузерная игра с кубиками на Canvas.
